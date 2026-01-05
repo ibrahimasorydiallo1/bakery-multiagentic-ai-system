@@ -1,0 +1,10 @@
+langchain~=0.3.25
+langchain_groq~=0.3.2
+langchain_huggingface~=0.2.0
+langchain_community~=0.3.24
+python-dotenv~=1.1.0
+chromadb~=1.0.12
+chroma-hnswlib~=0.7.6
+langchain-tavily
+sentence-transformers~=4.1.0
+# torch~=2.9.1
