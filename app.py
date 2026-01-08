@@ -190,7 +190,8 @@ def main():
         db = assistant.vector_db
 
         # Préparer les outils
-        tavily_tool = TavilySearch(max_results=3)
+        tavily_tool = TavilySearch(max_results=3, topic="general", include_raw_content=False,
+                                     search_depth="basic", country=None, include_answer=False, include_usage=False)
         tools = [tavily_tool]
 
         # Initialisation des Agents

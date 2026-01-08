@@ -1,43 +1,47 @@
-# agents/inventory.py
 from langchain_core.messages import HumanMessage
 
 class InventoryManager:
     def __init__(self, llm, tools):
-        # On lie Tavily au LLM
-        self.model = llm.bind_tools(tools)
+        # On garde une version du modèle avec outils et une version normale pour la synthèse
+        self.model_with_tools = llm.bind_tools(tools)
+        self.model_raw = llm 
         self.tools_map = {tool.name: tool for tool in tools}
 
     def run(self, state):
-        print("--- AGENT GESTIONNAIRE : RECHERCHE DE PRIX RÉELS ---")
+        print("--- AGENT GESTIONNAIRE : RECHERCHE ET SYNTHÈSE FINANCIÈRE ---")
         recipe = state.get('recipe_proposal', "")
         
-        prompt = f"""Tu es la gestionnaire des finances Safiatou DIALLO. 
-        1. Utilise Tavily pour chercher le prix actuel des ingrédients principaux de cette recette : {recipe}.
-        2. Calcule un prix de vente conseillé (coût ingrédients x 3).
-        3. Tu dois impérativement répondre en suivant ce format exact :
-
-            - PRIX DES DEPENSES TOTAL : [Montant]€
-            - PRIX DE VENTE CONSEILLÉ : [Montant]€
-            - BÉNÉFICE ESTIMÉ : [Montant]€
-            - CLIENTS CIBLES : [Description]
-            - LIEUX DE VENTE : [Description]
-
-        Sois concis et bref, ne donne pas de détails techniques de recherche."""
-
-        # L'IA va détecter qu'elle doit utiliser 'tavily_search_results_json'
-        response = self.model.invoke([HumanMessage(content=prompt)])
+        # 1. Appel pour déclencher la recherche
+        search_prompt = f"Cherche les prix actuels du marché pour les ingrédients de cette recette : {recipe}"
+        response = self.model_with_tools.invoke([HumanMessage(content=search_prompt)])
         
+        search_context = ""
+        
+        # 2. Exécution réelle des outils si nécessaire
         if response.tool_calls:
-            results = []
             for tool_call in response.tool_calls:
                 tool = self.tools_map[tool_call["name"]]
-                out = tool.invoke(tool_call["args"])
-                results.append(str(out))
-            
-            # On renvoie les données brutes de Tavily au State
-            # (Ou on peut refaire un appel au LLM pour qu'il synthétise, c'est encore mieux)
-            analysis = f"Données du marché trouvées : {results}"
+                # On récupère le texte brut des résultats de recherche
+                search_context += str(tool.invoke(tool_call["args"]))
         else:
-            analysis = response.content
+            search_context = "Pas de données web trouvées, utilise tes connaissances générales."
 
-        return {"financials": analysis}
+        # 3. DEUXIÈME APPEL : La synthèse propre
+        # On utilise model_raw (sans outils) pour forcer la rédaction du rapport
+        final_prompt = f"""Tu es Safiatou DIALLO, gestionnaire financière.
+        Basé sur ces données de recherche : {search_context}
+        
+        Analyse la recette suivante : {recipe}
+        
+        Rédige ton rapport strictement au format suivant :
+        - PRIX DES DEPENSES TOTAL : [Montant]€
+        - PRIX DE VENTE CONSEILLÉ : [Montant]€
+        - BÉNÉFICE ESTIMÉ : [Montant]€
+        - CLIENTS CIBLES : [Description]
+        - LIEUX DE VENTE : [Description]
+
+        Sois directe et ne donne aucune explication technique."""
+
+        final_response = self.model_raw.invoke([HumanMessage(content=final_prompt)])
+        
+        return {"financials": final_response.content}
