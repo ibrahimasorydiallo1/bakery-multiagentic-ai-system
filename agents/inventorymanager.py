@@ -15,13 +15,14 @@ class InventoryManager:
         1. Utilise Tavily pour chercher le prix actuel des ingrédients principaux de cette recette : {recipe}.
         2. Calcule un prix de vente conseillé (coût ingrédients x 3).
         3. Tu dois impérativement répondre en suivant ce format exact :
+
             - PRIX DES DEPENSES TOTAL : [Montant]€
             - PRIX DE VENTE CONSEILLÉ : [Montant]€
             - BÉNÉFICE ESTIMÉ : [Montant]€
             - CLIENTS CIBLES : [Description]
             - LIEUX DE VENTE : [Description]
 
-        Sois concis, ne donne pas de détails techniques de recherche."""
+        Sois concis et bref, ne donne pas de détails techniques de recherche."""
 
         # L'IA va détecter qu'elle doit utiliser 'tavily_search_results_json'
         response = self.model.invoke([HumanMessage(content=prompt)])

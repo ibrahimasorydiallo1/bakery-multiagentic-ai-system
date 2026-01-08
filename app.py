@@ -3,7 +3,7 @@ from typing import List
 from dotenv import load_dotenv
 from langchain_core import tools
 from langchain_groq import ChatGroq
-from langchain_tavily import TavilySearchResults
+from langchain_tavily import TavilySearch
 from langchain_core.output_parsers import StrOutputParser
 from langchain_groq import ChatGroq
 from langchain_core.prompts import ChatPromptTemplate
@@ -117,6 +117,7 @@ class RAGAssistant:
             )
 
     def add_documents(self, documents: List) -> None:
+        
         """
         Add documents to the knowledge base.
 
@@ -189,7 +190,7 @@ def main():
         db = assistant.vector_db
 
         # Préparer les outils
-        tavily_tool = TavilySearchResults(k=3)
+        tavily_tool = TavilySearch(max_results=3)
         tools = [tavily_tool]
 
         # Initialisation des Agents
