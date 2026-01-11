@@ -1,6 +1,8 @@
 import os
 from typing import List
 from dotenv import load_dotenv
+
+import gradio as gr
 from langchain_core import tools
 from langchain_groq import ChatGroq
 from langchain_tavily import TavilySearch
@@ -8,15 +10,20 @@ from langchain_core.output_parsers import StrOutputParser
 from langchain_groq import ChatGroq
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_community.document_loaders import TextLoader
-from agents.inventorymanager import InventoryManager
+
 from vectordb import VectorDB
 from agents.chef import ChefAgent
 from agents.quality import QualityAgent
+from agents.inventorymanager import InventoryManager
+
 from state import BakeryState
 from langgraph.graph import StateGraph, END
 
 # Load environment variables
 load_dotenv()
+
+os.environ["LANGCHAIN_TRACING_V2"] = "true"
+os.environ["LANGCHAIN_API_KEY"] = "ton_token"
 
 def load_documents(documents_path="data") -> List[str]:
     """
@@ -242,6 +249,15 @@ def main():
 
     except Exception as e:
         print(f"Error running Bakery AI: {e}")
+
+demo = gr.Interface(
+    fn=main,
+    inputs=["text", "slider"],
+    outputs=["text"],
+    api_name="predict"
+)
+
+demo.launch()
 
 
 if __name__ == "__main__":
