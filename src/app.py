@@ -8,6 +8,7 @@ from langchain_groq import ChatGroq
 from langchain_tavily import TavilySearch
 from langchain_core.output_parsers import StrOutputParser
 from langchain_groq import ChatGroq
+from langsmith import traceable
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_community.document_loaders import TextLoader
 
@@ -18,13 +19,17 @@ from agents.inventorymanager import InventoryManager
 
 from state import BakeryState
 from langgraph.graph import StateGraph, END
+import warnings
 
 # Load environment variables
 load_dotenv()
 
-os.environ["LANGCHAIN_TRACING_V2"] = "true"
-os.environ["LANGCHAIN_API_KEY"] = "ton_token"
+# os.environ["LANGCHAIN_TRACING_V2"] = "true"
+# os.environ["LANGCHAIN_API_KEY"] = "ton_token"
 
+warnings.filterwarnings("ignore", category=UserWarning, module="langchain_tavily")
+
+@traceable
 def load_documents(documents_path="data") -> List[str]:
     """
     Load documents for demonstration.
@@ -178,7 +183,8 @@ class RAGAssistant:
         llm_answer = self.chain.invoke(chain_input)
 
         return llm_answer
-
+        
+@traceable
 def main():
     try:
         # Initialisation de l'assistant
@@ -250,14 +256,14 @@ def main():
     except Exception as e:
         print(f"Error running Bakery AI: {e}")
 
-demo = gr.Interface(
-    fn=main,
-    inputs=["text", "slider"],
-    outputs=["text"],
-    api_name="predict"
-)
+# demo = gr.Interface(
+#     fn=main,
+#     inputs=["text", "slider"],
+#     outputs=["text"],
+#     api_name="predict"
+# )
 
-demo.launch()
+# demo.launch()
 
 
 if __name__ == "__main__":
