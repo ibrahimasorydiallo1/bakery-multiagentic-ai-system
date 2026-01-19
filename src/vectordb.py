@@ -98,7 +98,7 @@ class VectorDB:
                 if torch.cuda.is_available()
                 else "mps" if torch.backends.mps.is_available() else "cpu"
             )
-            print(device)
+            # print(device)
 
             embedding_model = SentenceTransformer(self.embedding_model_name, device=device)
             # print(embedding_model)
@@ -149,7 +149,6 @@ class VectorDB:
                     embeddings=embeddings,
                     metadatas=clean_metadatas,
                 )
-                print("nothing")
             except Exception as e:
                 print(f"Error adding document {doc_index} to vector DB:", e)
             next_id += len(text_chunks)
