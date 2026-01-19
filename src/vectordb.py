@@ -29,8 +29,8 @@ class VectorDB:
         )
 
         # Initialise ChromaDB client
-        self.client = chromadb.PersistentClient(path="./chroma_db")
-        # self.client = chromadb.Client()
+        # self.client = chromadb.PersistentClient(path="./chroma_db")
+        self.client = chromadb.Client()
 
         # Load embedding model
         self.embedding_model = SentenceTransformer(self.embedding_model_name)
@@ -38,6 +38,7 @@ class VectorDB:
         # Get or create collection
         self.collection = self.client.get_or_create_collection(
             name=self.collection_name,
+            # embedding_function=None,
             metadata={"description": "RAG document collection"},
         )
 
@@ -97,8 +98,10 @@ class VectorDB:
                 if torch.cuda.is_available()
                 else "mps" if torch.backends.mps.is_available() else "cpu"
             )
+            print(device)
 
             embedding_model = SentenceTransformer(self.embedding_model_name, device=device)
+            # print(embedding_model)
 
         except Exception as e:
             print("Error loading embedding model:", e)
@@ -113,6 +116,15 @@ class VectorDB:
             title = doc.metadata.get("source", "")
 
             chunked_document = self.chunk_text(content)
+            # On s'assure que les métadonnées sont une liste de dictionnaires simples
+            # On nettoie au passage pour éviter les objets bizarres
+            clean_metadatas = []
+            for chunk in chunked_document:
+                clean_metadatas.append({
+                    "source": title if title else "Inconnu",
+                    "chunk_index": str(chunk.get("chunk_index", "0")),
+                    "title": str(chunk.get("title", ""))
+                })
 
             text_chunks = [chunk["content"] for chunk in chunked_document]
 
@@ -122,6 +134,7 @@ class VectorDB:
             # Create embeddings for all chunks
             try:
                 embeddings = embedding_model.encode(text_chunks).tolist()
+                # print(embeddings)
 
             except Exception as e:
                 print(f"Error generating embeddings:", e)
@@ -129,12 +142,14 @@ class VectorDB:
             # Push to Chroma
             try:
                 print(f"Adding document to vector DB...")
+
                 self.collection.add(
                     ids=ids,
                     documents=text_chunks,
                     embeddings=embeddings,
-                    metadatas=chunked_document,
+                    metadatas=clean_metadatas,
                 )
+                print("nothing")
             except Exception as e:
                 print(f"Error adding document {doc_index} to vector DB:", e)
             next_id += len(text_chunks)
